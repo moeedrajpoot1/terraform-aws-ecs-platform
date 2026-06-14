@@ -1,0 +1,11 @@
+# OS noise
+.DS_Store
+
+# The fastapi app is its own git repo (github.com/moeedrajpoot1/fastapi);
+# it is tracked there, not embedded here.
+fastapi/
+
+# Safety net for Terraform artifacts (see infra/.gitignore)
+**/.terraform/*
+*.tfstate
+*.tfstate.*
