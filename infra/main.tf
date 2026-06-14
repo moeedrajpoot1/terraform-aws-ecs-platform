@@ -14,16 +14,13 @@ data "aws_subnets" "default" {
   }
 }
 
-# ECR repositories. These are shared across all environments, so they are
-# created ONCE (outside this per-environment state) and only looked up here:
-#   aws ecr create-repository --repository-name fastapi-backend
-#   aws ecr create-repository --repository-name fastapi-frontend
-data "aws_ecr_repository" "backend" {
-  name = "fastapi-backend"
+# ECR repositories — one per environment, created and managed here.
+resource "aws_ecr_repository" "backend" {
+  name = "fastapi-backend-${var.environment}"
 }
 
-data "aws_ecr_repository" "frontend" {
-  name = "fastapi-frontend"
+resource "aws_ecr_repository" "frontend" {
+  name = "fastapi-frontend-${var.environment}"
 }
 
 # One ECS cluster per environment
@@ -57,7 +54,7 @@ module "backend" {
   source = "./modules/ecs-service"
 
   name               = "fastapi-backend-${var.environment}"
-  image              = "${data.aws_ecr_repository.backend.repository_url}:${var.image_tag}"
+  image              = "${aws_ecr_repository.backend.repository_url}:${var.image_tag}"
   container_port     = 8000
   cluster_id         = aws_ecs_cluster.main.id
   execution_role_arn = aws_iam_role.ecs_execution.arn
@@ -77,7 +74,7 @@ module "frontend" {
   source = "./modules/ecs-service"
 
   name               = "fastapi-frontend-${var.environment}"
-  image              = "${data.aws_ecr_repository.frontend.repository_url}:${var.image_tag}"
+  image              = "${aws_ecr_repository.frontend.repository_url}:${var.image_tag}"
   container_port     = 3000
   cluster_id         = aws_ecs_cluster.main.id
   execution_role_arn = aws_iam_role.ecs_execution.arn
